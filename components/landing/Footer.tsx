@@ -12,7 +12,7 @@ export function Footer() {
             </span>
             <span className="font-display text-xl">BioFlowzy</span>
           </div>
-          <p className="mt-4 text-sm text-white/80">Uma bio brutalista para quem não aceita o comum.</p>
+          <p className="mt-4 text-sm text-white/80">Um link para compartilhar tudo o que importa.</p>
           <div className="mt-5 flex gap-3">
             {[Instagram, Youtube, Twitter, Github].map((Icon, i) => (
               <a

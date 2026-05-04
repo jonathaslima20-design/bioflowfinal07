@@ -1,7 +1,7 @@
 'use client';
 
 import { ExternalLink } from 'lucide-react';
-import { SOCIALS_BY_KEY } from '@/lib/socials';
+import { SOCIALS_BY_KEY, getSocialHref } from '@/lib/socials';
 import type { BioThemeProps, BioThemeMeta } from '@/themes/types';
 import { getThemeSettings, getFontStack } from '@/themes/types';
 import { BioflowzyBadge } from '@/components/bio/BioflowzyBadge';
@@ -72,7 +72,7 @@ export function BrutalistTheme({ profile, links, socials, videos, banners, track
                 return (
                   <a
                     key={s.id}
-                    href={s.url}
+                    href={getSocialHref(s.platform, s.url)}
                     target="_blank"
                     rel="noreferrer"
                     onClick={() => t('social', s.id)}

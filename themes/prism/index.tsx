@@ -1,7 +1,7 @@
 'use client';
 
 import { ExternalLink } from 'lucide-react';
-import { SOCIALS_BY_KEY } from '@/lib/socials';
+import { SOCIALS_BY_KEY, getSocialHref } from '@/lib/socials';
 import type { BioThemeProps, BioThemeMeta } from '@/themes/types';
 import { getThemeSettings, getFontStack } from '@/themes/types';
 import { BioflowzyBadge } from '@/components/bio/BioflowzyBadge';
@@ -91,7 +91,7 @@ export function PrismTheme({ profile, links, socials, videos, banners, track, pr
                 const meta = SOCIALS_BY_KEY[(soc.platform || '').toLowerCase()];
                 const Icon = meta?.icon;
                 return (
-                  <a key={soc.id} href={soc.url} target="_blank" rel="noreferrer" onClick={() => t('social', soc.id)}
+                  <a key={soc.id} href={getSocialHref(soc.platform, soc.url)} target="_blank" rel="noreferrer" onClick={() => t('social', soc.id)}
                     className="w-10 h-10 rounded-full flex items-center justify-center transition-transform hover:scale-110 prism-social"
                     style={{ border: `1px solid ${accent}55`, color: text, background: 'rgba(255,255,255,0.05)' }}>
                     {Icon && <Icon className="w-4 h-4" />}

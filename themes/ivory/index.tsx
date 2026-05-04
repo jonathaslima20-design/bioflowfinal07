@@ -1,6 +1,6 @@
 'use client';
 
-import { SOCIALS_BY_KEY } from '@/lib/socials';
+import { SOCIALS_BY_KEY, getSocialHref } from '@/lib/socials';
 import type { BioThemeProps, BioThemeMeta } from '@/themes/types';
 import { getThemeSettings, getFontStack } from '@/themes/types';
 import { BioflowzyBadge } from '@/components/bio/BioflowzyBadge';
@@ -111,7 +111,7 @@ export function IvoryTheme({ profile, links, socials, videos, banners, track, pr
                 return Icon ? (
                   <a
                     key={soc.id}
-                    href={soc.url}
+                    href={getSocialHref(soc.platform, soc.url)}
                     target="_blank"
                     rel="noreferrer"
                     onClick={() => t('social', soc.id)}

@@ -1,7 +1,7 @@
 'use client';
 
 import { ChevronRight } from 'lucide-react';
-import { SOCIALS_BY_KEY } from '@/lib/socials';
+import { SOCIALS_BY_KEY, getSocialHref } from '@/lib/socials';
 import type { BioThemeProps, BioThemeMeta } from '@/themes/types';
 import { getThemeSettings, getFontStack } from '@/themes/types';
 import { BioflowzyBadge } from '@/components/bio/BioflowzyBadge';
@@ -82,7 +82,7 @@ export function ChromeTheme({ profile, links, socials, videos, banners, track, p
                 const meta = SOCIALS_BY_KEY[(soc.platform || '').toLowerCase()];
                 const Icon = meta?.icon;
                 return (
-                  <a key={soc.id} href={soc.url} target="_blank" rel="noreferrer" onClick={() => t('social', soc.id)}
+                  <a key={soc.id} href={getSocialHref(soc.platform, soc.url)} target="_blank" rel="noreferrer" onClick={() => t('social', soc.id)}
                     className="w-11 h-11 rounded-full flex items-center justify-center chrome-tile"
                     style={{
                       background: 'rgba(255,255,255,0.08)',

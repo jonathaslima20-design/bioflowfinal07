@@ -1,6 +1,6 @@
 'use client';
 
-import { SOCIALS_BY_KEY } from '@/lib/socials';
+import { SOCIALS_BY_KEY, getSocialHref } from '@/lib/socials';
 import type { BioThemeProps, BioThemeMeta } from '@/themes/types';
 import { getThemeSettings, getFontStack } from '@/themes/types';
 import { BioflowzyBadge } from '@/components/bio/BioflowzyBadge';
@@ -102,7 +102,7 @@ export function TerminalTheme({ profile, links, socials, videos, banners, track,
                     <div key={soc.id} className="ml-3">
                       <span style={{ color: '#F472B6' }}>&quot;{meta?.label || soc.platform}&quot;</span>
                       <span className="opacity-60">: </span>
-                      <a href={soc.url} target="_blank" rel="noreferrer" onClick={() => t('social', soc.id)} style={{ color: caret }} className="hover:underline">
+                      <a href={getSocialHref(soc.platform, soc.url)} target="_blank" rel="noreferrer" onClick={() => t('social', soc.id)} style={{ color: caret }} className="hover:underline">
                         &quot;{soc.url}&quot;
                       </a>
                       {i < socials.length - 1 && <span className="opacity-60">,</span>}

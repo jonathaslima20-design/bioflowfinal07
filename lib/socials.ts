@@ -1,4 +1,4 @@
-import { Globe, Mail } from 'lucide-react';
+import { Globe, Mail, MapPin } from 'lucide-react';
 import {
   IconInstagram, IconTiktok, IconYoutube, IconXTwitter, IconFacebook,
   IconLinkedin, IconGithub, IconThreads, IconPinterest, IconSpotify,
@@ -9,7 +9,8 @@ import type { ComponentType } from 'react';
 export type SocialKey =
   | 'instagram' | 'tiktok' | 'youtube' | 'x' | 'facebook' | 'linkedin'
   | 'github' | 'threads' | 'pinterest' | 'spotify' | 'soundcloud'
-  | 'twitch' | 'discord' | 'whatsapp' | 'telegram' | 'email' | 'website';
+  | 'twitch' | 'discord' | 'whatsapp' | 'telegram' | 'email' | 'website'
+  | 'location';
 
 export type SocialMeta = {
   key: SocialKey;
@@ -38,6 +39,7 @@ export const SOCIALS: SocialMeta[] = [
   { key: 'telegram', label: 'Telegram', icon: IconTelegram, color: '#26A5E4', placeholder: '@user ou link', prefix: 'https://t.me/' },
   { key: 'email', label: 'Email', icon: Mail, color: '#000000', placeholder: 'voce@exemplo.com' },
   { key: 'website', label: 'Website', icon: Globe, color: '#000000', placeholder: 'https://seusite.com' },
+  { key: 'location', label: 'Localização', icon: MapPin, color: '#EF4444', placeholder: 'São Paulo, SP' },
 ];
 
 export const SOCIALS_BY_KEY: Record<string, SocialMeta> = SOCIALS.reduce((acc, s) => {
@@ -45,9 +47,15 @@ export const SOCIALS_BY_KEY: Record<string, SocialMeta> = SOCIALS.reduce((acc, s
   return acc;
 }, {} as Record<string, SocialMeta>);
 
+export function getSocialHref(platform: string, url: string): string {
+  if (platform === 'location') return `https://maps.google.com/?q=${encodeURIComponent(url)}`;
+  return url;
+}
+
 export function normalizeSocial(key: SocialKey, raw: string): string {
   const v = (raw || '').trim();
   if (!v) return '';
+  if (key === 'location') return `https://maps.google.com/?q=${encodeURIComponent(v)}`;
   if (key === 'email') return v.includes('@') ? `mailto:${v.replace(/^mailto:/, '')}` : '';
   if (key === 'whatsapp') {
     if (/^https?:\/\//i.test(v)) return v;

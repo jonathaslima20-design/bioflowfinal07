@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { THEMES } from '@/themes/registry';
-import { Eye, EyeOff, Lock, Clock as Unlock, RefreshCw, ChartBar as BarChart2 } from 'lucide-react';
+import { Eye, EyeOff, Lock, Clock as Unlock, RefreshCw, ChartBar as BarChart2, GripVertical } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface ThemeRow {
@@ -13,6 +13,7 @@ interface ThemeRow {
   userCount: number;
   disabled: boolean;
   proOnly: boolean;
+  catalogOrder: number;
 }
 
 export default function AdminThemesPage() {
@@ -21,6 +22,7 @@ export default function AdminThemesPage() {
   const [saving, setSaving] = useState<string | null>(null);
   const [adminId, setAdminId] = useState<string>('');
   const [viewChart, setViewChart] = useState(false);
+  const draggingKey = useRef<string | null>(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -31,9 +33,10 @@ export default function AdminThemesPage() {
   const fetchData = useCallback(async () => {
     setLoading(true);
 
-    const [{ data: settingsRows }, { data: counts }] = await Promise.all([
+    const [{ data: settingsRows }, { data: counts }, { data: presets }] = await Promise.all([
       supabase.from('admin_settings').select('key, value').in('key', ['disabled_themes', 'pro_only_themes']),
       supabase.rpc('theme_usage_counts'),
+      supabase.from('theme_showcase_presets').select('theme_key, catalog_order').order('catalog_order', { ascending: true }),
     ]);
 
     const disabledThemes: string[] = settingsRows?.find(r => r.key === 'disabled_themes')?.value ?? [];
@@ -44,6 +47,11 @@ export default function AdminThemesPage() {
       themeCounts[r.theme] = Number(r.count);
     });
 
+    const orderMap: Record<string, number> = {};
+    (presets ?? []).forEach((r: any) => {
+      orderMap[r.theme_key] = r.catalog_order;
+    });
+
     const rows: ThemeRow[] = Object.values(THEMES).map(({ meta }) => ({
       key: meta.key,
       name: meta.name,
@@ -51,9 +59,10 @@ export default function AdminThemesPage() {
       userCount: themeCounts[meta.key] ?? 0,
       disabled: disabledThemes.includes(meta.key),
       proOnly: proOnlyThemes.includes(meta.key),
+      catalogOrder: orderMap[meta.key] ?? 999,
     }));
 
-    setThemes(rows.sort((a, b) => b.userCount - a.userCount));
+    setThemes(rows.sort((a, b) => a.catalogOrder - b.catalogOrder));
     setLoading(false);
   }, []);
 
@@ -100,6 +109,41 @@ export default function AdminThemesPage() {
     setSaving(null);
   }
 
+  async function persistOrder(ordered: ThemeRow[]) {
+    await Promise.all(
+      ordered.map((t, i) =>
+        supabase
+          .from('theme_showcase_presets')
+          .upsert({ theme_key: t.key, catalog_order: i }, { onConflict: 'theme_key' })
+      )
+    );
+  }
+
+  function onDragStart(key: string) {
+    draggingKey.current = key;
+  }
+
+  function onDragOver(e: React.DragEvent) {
+    e.preventDefault();
+  }
+
+  function onDrop(targetKey: string) {
+    const fromKey = draggingKey.current;
+    draggingKey.current = null;
+    if (!fromKey || fromKey === targetKey) return;
+
+    setThemes(prev => {
+      const from = prev.findIndex(t => t.key === fromKey);
+      const to = prev.findIndex(t => t.key === targetKey);
+      const next = [...prev];
+      const [moved] = next.splice(from, 1);
+      next.splice(to, 0, moved);
+      const reindexed = next.map((t, i) => ({ ...t, catalogOrder: i }));
+      persistOrder(reindexed);
+      return reindexed;
+    });
+  }
+
   const totalUsers = themes.reduce((s, t) => s + t.userCount, 0);
 
   return (
@@ -107,7 +151,7 @@ export default function AdminThemesPage() {
       <div className="mb-6 flex items-start justify-between">
         <div>
           <h1 className="font-display text-3xl mb-1">Gestão de Temas</h1>
-          <p className="text-gray-500 text-sm">{themes.length} temas disponíveis</p>
+          <p className="text-gray-500 text-sm">{themes.length} temas · arraste para reordenar o catálogo</p>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -129,6 +173,7 @@ export default function AdminThemesPage() {
         <div className="flex items-center gap-1.5"><EyeOff className="w-3.5 h-3.5 text-red-400" /> Desativado (ninguém pode selecionar)</div>
         <div className="flex items-center gap-1.5"><Lock className="w-3.5 h-3.5 text-yellow-500" /> Somente Pro</div>
         <div className="flex items-center gap-1.5"><Unlock className="w-3.5 h-3.5 text-gray-400" /> Todos os planos</div>
+        <div className="flex items-center gap-1.5"><GripVertical className="w-3.5 h-3.5 text-gray-400" /> Arraste para reordenar</div>
       </div>
 
       {/* Chart view */}
@@ -156,9 +201,18 @@ export default function AdminThemesPage() {
             return (
               <div
                 key={theme.key}
-                className={`brutal-card p-4 transition-all ${theme.disabled ? 'opacity-60' : ''}`}
+                draggable
+                onDragStart={() => onDragStart(theme.key)}
+                onDragOver={onDragOver}
+                onDrop={() => onDrop(theme.key)}
+                className={`brutal-card p-4 transition-all cursor-default ${theme.disabled ? 'opacity-60' : ''}`}
               >
                 <div className="flex items-start gap-4">
+                  {/* Drag handle */}
+                  <div className="cursor-grab mt-1 text-gray-400 hover:text-gray-600 shrink-0">
+                    <GripVertical className="w-5 h-5" />
+                  </div>
+
                   {/* Color swatch from theme defaults */}
                   <div
                     className="w-10 h-10 shrink-0 brutal-border"

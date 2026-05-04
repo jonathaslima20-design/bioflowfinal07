@@ -21,6 +21,7 @@ export type ShowcasePreset = {
   show_in_catalog: boolean;
   show_in_landing_carousel: boolean;
   landing_order: number;
+  catalog_order: number;
   updated_at?: string;
   updated_by?: string | null;
 };
@@ -56,6 +57,7 @@ export function emptyPreset(themeKey: string): ShowcasePreset {
     show_in_catalog: true,
     show_in_landing_carousel: false,
     landing_order: 0,
+    catalog_order: 0,
   };
 }
 
@@ -89,7 +91,8 @@ export function landingDemoFor(preset: ShowcasePreset | null | undefined): Showc
 export async function fetchAllShowcasePresets(): Promise<ShowcasePreset[]> {
   const { data, error } = await supabase
     .from('theme_showcase_presets')
-    .select('*');
+    .select('*')
+    .order('catalog_order', { ascending: true });
   if (error || !data) return [];
   return data as ShowcasePreset[];
 }

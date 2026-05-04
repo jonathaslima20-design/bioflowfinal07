@@ -42,7 +42,8 @@ export default function SocialsPage() {
   async function confirmAdd() {
     if (!selected) return;
     if (atLimit) { alert('Limite de redes sociais do plano atingido.'); return; }
-    const url = normalizeSocial(selected, handleInput);
+    if (!handleInput.trim()) return alert('Valor inválido.');
+    const url = selected === 'location' ? handleInput.trim() : normalizeSocial(selected, handleInput);
     if (!url) return alert('Valor inválido.');
     const { data } = await supabase.from('social_links').insert({
       profile_id: profileId, platform: selected, url, position: socials.length,

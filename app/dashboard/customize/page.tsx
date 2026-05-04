@@ -6,7 +6,7 @@ import { BioPreview } from '@/components/dashboard/BioPreview';
 import { THEMES, getTheme } from '@/themes/registry';
 import { ThemeMockup } from '@/components/themes/ThemeMockup';
 import { ThemeControls } from '@/components/dashboard/ThemeControls';
-import { Check } from 'lucide-react';
+import { Check, Eye, X } from 'lucide-react';
 import { fetchAllShowcasePresets, catalogDemoFor, ShowcasePreset } from '@/lib/theme-showcase';
 
 export default function CustomizePage() {
@@ -18,6 +18,8 @@ export default function CustomizePage() {
   const [banners, setBanners] = useState<any[]>([]);
   const [saved, setSaved] = useState(false);
   const [showcase, setShowcase] = useState<Record<string, ShowcasePreset>>({});
+  const [catalogOrder, setCatalogOrder] = useState<string[]>([]);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const saveTimer = useRef<any>(null);
 
   useEffect(() => {
@@ -26,6 +28,8 @@ export default function CustomizePage() {
       const map: Record<string, ShowcasePreset> = {};
       for (const p of all) map[p.theme_key] = p;
       setShowcase(map);
+      // all is already sorted by catalog_order from fetchAllShowcasePresets
+      setCatalogOrder(all.map(p => p.theme_key));
     })();
   }, []);
 
@@ -146,7 +150,10 @@ export default function CustomizePage() {
             Cada tema tem um layout e personalidade unicos. Suas cores continuam aplicadas.
           </p>
           <div className="grid sm:grid-cols-2 gap-4">
-            {Object.values(THEMES).map(({ meta }) => {
+            {[
+              ...catalogOrder.filter(k => THEMES[k]).map(k => THEMES[k]),
+              ...Object.values(THEMES).filter(({ meta }) => !catalogOrder.includes(meta.key)),
+            ].map(({ meta }) => {
               const active = activeKey === meta.key;
               const preset = showcase[meta.key];
               const hasShowcase = preset?.show_in_catalog;
@@ -223,6 +230,47 @@ export default function CustomizePage() {
           />
         </div>
       </div>
+
+      {/* Mobile floating preview button */}
+      <button
+        onClick={() => setPreviewOpen(true)}
+        className="lg:hidden fixed bottom-6 right-6 z-40 flex items-center gap-2 bg-black text-white font-bold text-sm px-4 py-3 brutal-border brutal-shadow active:translate-y-0.5 active:shadow-none transition-all"
+      >
+        <Eye className="w-4 h-4" />
+        Visualizar
+      </button>
+
+      {/* Mobile preview drawer */}
+      {previewOpen && (
+        <div className="lg:hidden fixed inset-0 z-50 flex flex-col">
+          <div
+            className="absolute inset-0 bg-black/60"
+            onClick={() => setPreviewOpen(false)}
+          />
+          <div className="relative mt-auto bg-white brutal-border-t max-h-[92dvh] flex flex-col animate-slide-up">
+            <div className="flex items-center justify-between px-5 py-3 border-b-[3px] border-black shrink-0">
+              <span className="font-display text-lg">Preview</span>
+              <button
+                onClick={() => setPreviewOpen(false)}
+                className="brutal-btn p-2 bg-white"
+                aria-label="Fechar preview"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="overflow-y-auto flex-1 flex items-start justify-center py-6 px-4">
+              <BioPreview
+                profileId={profileId}
+                profile={profile}
+                links={links}
+                socials={socials}
+                videos={videos}
+                banners={banners}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
